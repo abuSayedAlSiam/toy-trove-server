@@ -30,6 +30,12 @@ async function run() {
     const allToys = client.db('toyTrove').collection('allToys') ;
 
 
+    // operations
+    app.get('/allToys', async(req, res)=>{
+        const cursor = allToys.find();
+        const result = await cursor.toArray();
+        res.send(result);
+    })
 
 
 
