@@ -60,8 +60,19 @@ async function run() {
     // add toy 
     app.post('/addToy', async(req, res)=> {
       const toyData = req.body;
-      console.log(toyData);
       const result = await toysCollection.insertOne(toyData);
+      res.send(result);
+    })
+
+    // my toys 
+    app.get('/myToys', async(req, res) => {
+      let query = {};
+      console.log(req.query.email)
+      if(req.query?.email){
+        query = {sellerEmail: req.query.email}
+      }
+
+      const result = await toysCollection.find(query).toArray();
       res.send(result);
     })
 
