@@ -47,6 +47,16 @@ async function run() {
       res.send(result);
     })
 
+    // filter by category
+    app.get('/allToys/:category', async (req, res) => {
+      const subCategory = req.params.category;
+      const cursor = toysCollection.find({ subCategory: subCategory });
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    
+    
+
     // add toy 
     app.post('/addToy', async(req, res)=> {
       const toyData = req.body;
