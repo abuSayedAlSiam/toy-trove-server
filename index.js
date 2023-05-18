@@ -48,6 +48,7 @@ async function run() {
     })
 
     // filter by category
+    
     app.get('/allToys/:category', async (req, res) => {
       const subCategory = req.params.category;
       const cursor = toysCollection.find({ subCategory: subCategory });
