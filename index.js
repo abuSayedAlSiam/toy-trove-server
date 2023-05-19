@@ -1,9 +1,9 @@
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config()
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
 const app = express();
-const port =  process.env.PORT || 5000;
+const port = process.env.PORT || 5000;
 
 // middleware
 app.use(cors());
@@ -19,7 +19,7 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
@@ -28,93 +28,98 @@ async function run() {
     // await client.connect();
 
     // my codes here
-    const toysCollection = client.db('toyTrove').collection('allToys') ;
-
+    const toysCollection = client.db("toyTrove").collection("allToys");
 
     // operations
-    app.get('/allToys', async (req, res) => {
-      const limit = parseInt(req.query.limit); 
-      const cursor = toysCollection.find().limit(limit);
+    app.get("/allToys", async (req, res) => {
+      let query = {};
+      
+      // search 
+      if (req.query?.toyName) {
+        query = { toyName: req.query.toyName };
+      }
+
+      // limit
+      const limit = parseInt(req.query.limit);
+      const cursor = toysCollection.find(query).limit(limit);
       const result = await cursor.toArray();
       res.send(result);
     });
 
-    app.get('/toy/:id', async(req, res)=>{
-      const id = req.params.id;
-      console.log(id);
-      const query = {_id: new ObjectId(id)}
-      // here option can be added 
-      const result = await toysCollection.findOne(query);
-      res.send(result);
-    })
+     // filter by category
 
-    // filter by category
-
-    app.get('/allToys/:category', async (req, res) => {
+     app.get("/allToys/:category", async (req, res) => {
       const subCategory = req.params.category;
       const cursor = toysCollection.find({ subCategory: subCategory });
       const result = await cursor.toArray();
       res.send(result);
     });
-    
-    
 
-    // add toy 
-    app.post('/addToy', async(req, res)=> {
+    app.get("/toy/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: new ObjectId(id) };
+      // here option can be added
+      const result = await toysCollection.findOne(query);
+      res.send(result);
+    });
+
+   
+
+    // add toy
+    app.post("/addToy", async (req, res) => {
       const toyData = req.body;
       const result = await toysCollection.insertOne(toyData);
       res.send(result);
-    })
+    });
 
-    // my toys 
-    app.get('/myToys', async(req, res) => {
+    // my toys
+    app.get("/myToys", async (req, res) => {
       let query = {};
-      if(req.query?.email){
-        query = {sellerEmail: req.query.email}
+      if (req.query?.email) {
+        query = { sellerEmail: req.query.email };
       }
-
-      const result = await toysCollection.find(query).toArray();
+    // console.log(req.query.sortOrder) 
+      const sortOrder = req.query.sortOrder === "descending" ? -1 : 1; 
+      
+      const result = await toysCollection.find(query).sort({ price: sortOrder }).toArray();
+    
       res.send(result);
-    })
+    });
+    
 
     // update a existing toy
-    app.patch('/updateToy/:id', async(req, res)=> {
-      const id =  req.params.id;
-      const filter = {_id: new ObjectId(id)}
+    app.patch("/updateToy/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
       const toyData = req.body;
       const updatedToy = {
         $set: {
-          toyName: toyData.toyName, 
           price: toyData.price,
-          picture: toyData.picture, 
-          sellerEmail: toyData.sellerEmail, 
-          sellerName: toyData.sellerName, 
-          availableQuantity: toyData.availableQuantity, 
-          subCategory: toyData.subCategory, 
-          ratings: toyData.ratings, 
-          toyDetails: toyData.toyDetails
-        }
-      }
-      const result = await toysCollection.updateOne(filter, updatedToy)
+          availableQuantity: toyData.availableQuantity,
+          toyDetails: toyData.toyDetails,
+        },
+      };
+      const result = await toysCollection.updateOne(filter, updatedToy);
       res.send(result);
-    })
-    
+    });
+
     // delete toy
-  
-    app.delete('/myToyList/:id', async(req, res)=> {
+
+    app.delete("/myToyList/:id", async (req, res) => {
       const id = req.params.id;
       console.log(id);
-      const query = {_id: new ObjectId(id)}
+      const query = { _id: new ObjectId(id) };
       const result = await toysCollection.deleteOne(query);
       // console.log(result);
-      res.send(result)
-    })
-
-
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -122,13 +127,10 @@ async function run() {
 }
 run().catch(console.dir);
 
-
-
-
-app.get('/', (req, res) => {
-    res.send('Toy server is running...')
-})
+app.get("/", (req, res) => {
+  res.send("Toy server is running...");
+});
 
 app.listen(port, () => {
-    console.log(`Toy server is running on port: ${port}`)
-})
+  console.log(`Toy server is running on port: ${port}`);
+});
