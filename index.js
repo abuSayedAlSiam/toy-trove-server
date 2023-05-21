@@ -30,13 +30,19 @@ async function run() {
     // my codes here
     const toysCollection = client.db("toyTrove").collection("allToys");
 
+    const indexKey = { toyName: 1 };
+    const indexOptions = { name: 'nameSearch' };
+    
+    // const result =  await toysCollection.createIndex(indexKey, indexOptions);
+   
+
     // operations
     app.get("/allToys", async (req, res) => {
       let query = {};
       
       // search 
       if (req.query?.toyName) {
-        query = { toyName: req.query.toyName };
+        query = { toyName: { $regex: req.query?.toyName, $options: "i" } };
       }
 
       // limit
@@ -65,7 +71,6 @@ async function run() {
     });
 
    
-
     // add toy
     app.post("/addToy", async (req, res) => {
       const toyData = req.body;
@@ -76,13 +81,20 @@ async function run() {
     // my toys
     app.get("/myToys", async (req, res) => {
       let query = {};
+      let sortOrder = {}
       if (req.query?.email) {
         query = { sellerEmail: req.query.email };
       }
-    // console.log(req.query.sortOrder) 
-      const sortOrder = req.query.sortOrder === "descending" ? -1 : 1; 
+    if(req.query?.sortOrder){
+       if(req.query.sortOrder == "ascending"){
+          sortOrder = { price: 1 } 
+       } 
+        if(req.query.sortOrder == "descending"){
+          sortOrder = { price: -1 } 
+       } 
+    }
       
-      const result = await toysCollection.find(query).sort({ price: sortOrder }).toArray();
+      const result = await toysCollection.find(query).sort(sortOrder).collation({ locale: "en_US", numericOrdering: true }).toArray();
     
       res.send(result);
     });
